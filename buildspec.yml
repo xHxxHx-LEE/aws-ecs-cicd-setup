@@ -27,4 +27,3 @@ phases:
       - echo Updating ECS service...
       - aws ecs update-service --cluster ci-cd-demo-cluster --service ci-cd-demo-service --task-definition $NEW_TASK_DEF --region $AWS_DEFAULT_REGION
       - echo "ECS deployment triggered. Blue/Green proceeds in background."
- 
