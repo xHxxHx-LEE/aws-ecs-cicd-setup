@@ -7,11 +7,11 @@ app = Flask(__name__)
 @app.route("/")
 def hello():
     hostname = socket.gethostname()[:12]  
-    return render_template("index.html", message=f"error CI/CD flask app ECS current-Task: {hostname}")
+    return render_template("index.html", message=f"CI/CD flask app ECS current-Task: {hostname}")
 
 @app.route("/health")
 def health():
-    return "SUCCESS", 500
+    return "SUCCESS", 200
 
 @app.route("/error")
 def error():
