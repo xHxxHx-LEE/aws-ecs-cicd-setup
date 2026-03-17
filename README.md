@@ -1030,20 +1030,29 @@ ECS 콘솔 → 서비스 → 배포 탭 → 편집
 
 #### Step 3: 50% 에러 코드 배포
 
+`app.py` 전체를 아래로 교체합니다:
+
 ```python
-# app.py 수정
+from flask import Flask, render_template
+import os
+import socket
 import random
 
-@app.route('/')
-def home():
+app = Flask(__name__)
+
+@app.route("/")
+def hello():
     if random.random() < 0.5:
         return "Internal Server Error", 500
     hostname = socket.gethostname()[:12]
     return render_template("index.html", message=f"CloudWatch alarm test - Task: {hostname}")
 
-@app.route('/health')
+@app.route("/health")
 def health():
-    return "SUCCESS", 200  # 헬스체크는 통과
+    return "SUCCESS", 200  # 헬스체크는 통과 (배포 성공 → Bake Time 진입)
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8080)
 ```
 
 ```bash
