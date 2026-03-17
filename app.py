@@ -7,10 +7,10 @@ app = Flask(__name__)
 
 @app.route("/")
 def hello():
-    if random.random() < 0.5:
+    if random.random() < 0.9:
         return "Internal Server Error", 500
     hostname = socket.gethostname()[:12]
-    return render_template("index.html", message=f"CloudWatch alarm test - Task: {hostname}")
+    return render_template("index.html", message=f"CloudWatch alarm test new - Task: {hostname}")
 
 @app.route("/health")
 def health():
