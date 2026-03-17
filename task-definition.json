@@ -9,7 +9,7 @@
   "containerDefinitions": [
     {
       "name": "app",
-      "image": "{ACCOUNT_ID}.dkr.ecr.ap-northeast-2.amazonaws.com/ci-cd-demo-app:latest",
+      "image": "{ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/ci-cd-demo-app:latest",
       "portMappings": [
         {
           "containerPort": 8080,
@@ -21,7 +21,7 @@
         "logDriver": "awslogs",
         "options": {
           "awslogs-group": "/ecs/ci-cd-demo",
-          "awslogs-region": "ap-northeast-2",
+          "awslogs-region": "us-east-1",
           "awslogs-stream-prefix": "ecs"
         }
       },

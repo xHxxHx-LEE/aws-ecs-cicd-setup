@@ -148,7 +148,7 @@ CloudWatch → 알람 → 알람 생성
 ALB_SUFFIX=$(aws elbv2 describe-load-balancers \
   --names ci-cd-demo-alb \
   --query 'LoadBalancers[0].LoadBalancerArn' \
-  --output text --region ap-northeast-2 | cut -d: -f6 | cut -d/ -f2-)
+  --output text --region us-east-1 | cut -d: -f6 | cut -d/ -f2-)
 
 # 알람 생성 (Target 5XX - 앱에서 반환하는 500 에러)
 aws cloudwatch put-metric-alarm \
@@ -161,7 +161,7 @@ aws cloudwatch put-metric-alarm \
   --comparison-operator GreaterThanThreshold \
   --evaluation-periods 1 \
   --dimensions Name=LoadBalancer,Value=$ALB_SUFFIX \
-  --region ap-northeast-2
+  --region us-east-1
 ```
 
 ### Step 2: ECS 서비스에 알람 연결
@@ -217,7 +217,7 @@ done
 aws cloudwatch describe-alarms \
   --alarm-names ci-cd-demo-5xx-alarm \
   --query 'MetricAlarms[0].StateValue' \
-  --region ap-northeast-2
+  --region us-east-1
 ```
 
 ---
@@ -236,14 +236,14 @@ aws ecs describe-services \
   --cluster ci-cd-demo-cluster \
   --services ci-cd-demo-service \
   --query 'services[0].deployments' \
-  --region ap-northeast-2
+  --region us-east-1
 
 # 이벤트 로그 확인
 aws ecs describe-services \
   --cluster ci-cd-demo-cluster \
   --services ci-cd-demo-service \
   --query 'services[0].events[:10]' \
-  --region ap-northeast-2
+  --region us-east-1
 ```
 
 ### CloudWatch Logs
@@ -269,5 +269,5 @@ aws ecs update-service \
   --cluster ci-cd-demo-cluster \
   --service ci-cd-demo-service \
   --task-definition ci-cd-demo-service:PREVIOUS_REVISION \
-  --region ap-northeast-2
+  --region us-east-1
 ```

@@ -59,7 +59,7 @@ aws ecs describe-services \
   --cluster ci-cd-demo-cluster \
   --services ci-cd-demo-service \
   --query 'services[0].deployments' \
-  --region ap-northeast-2
+  --region us-east-1
 ```
 
 ---

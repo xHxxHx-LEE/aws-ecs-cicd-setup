@@ -1,6 +1,6 @@
 # Phase 2-1: ECS 서비스 생성
 
-## 생성된 리소스
+## 생성되는 리소스
 
 ### 1. ECS Task Definition
 - **Family**: ci-cd-demo-service
@@ -17,50 +17,78 @@
 
 ## 배포 전 필수 작업: 첫 번째 이미지 푸시
 
-### 1. ECR 로그인
-```bash
-aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin ACCOUNT_ID.dkr.ecr.ap-northeast-2.amazonaws.com
-```
+> CloudShell 환경에서는 Docker를 사용할 수 없으므로 **CodeBuild**를 사용하여 첫 번째 이미지를 빌드합니다.
+> 자세한 절차는 `readme_cloudshell.md` Phase 2를 참조하세요.
 
-### 2. 이미지 빌드 및 푸시 (AMD64 플랫폼)
-```bash
-# 프로젝트 루트에서 실행
-docker build --platform linux/amd64 -t ci-cd-demo-app .
-docker tag ci-cd-demo-app:latest ACCOUNT_ID.dkr.ecr.ap-northeast-2.amazonaws.com/ci-cd-demo-app:latest
-docker push 277707126943.dkr.ecr.ap-northeast-2.amazonaws.com/ci-cd-demo-app:latest
-```
+### CodeBuild를 통한 이미지 빌드 (요약)
 
-**ACCOUNT_ID를 실제 AWS 계정 ID로 교체하세요.**
+1. CodeBuild에 GitHub 인증 등록 (`import-source-credentials`)
+2. CodeBuild 서비스 역할 생성
+3. CodeBuild 프로젝트 생성
+4. 수동 빌드 실행
+5. ECR에 이미지 확인
+
+```bash
+# ECR에 이미지가 있는지 확인
+aws ecr describe-images \
+  --repository-name ci-cd-demo-app \
+  --region us-east-1 \
+  --query 'imageDetails[*].{Tag:imageTags[0],PushedAt:imagePushedAt}' \
+  --output table
+```
 
 ## 배포 방법
 
 ```bash
-cd infrastructure
+cd ~/aws-ecs-cicd-setup/infrastructure
+chmod +x phase2-1-deploy.sh
 ./phase2-1-deploy.sh
 ```
+
+> `create-stack` 명령 후 스택 생성 완료까지 약 2~3분 소요됩니다.
 
 ## 배포 후 확인사항
 
 ### 1. ECS 서비스 상태
-- ECS 콘솔 → 클러스터 → ci-cd-demo-cluster → 서비스 탭
+
+```bash
+aws ecs describe-services \
+  --cluster ci-cd-demo-cluster \
+  --services ci-cd-demo-service \
+  --query 'services[0].{Status:status,Running:runningCount,Desired:desiredCount}' \
+  --region us-east-1
+```
+
 - **Running tasks**: 1/1 (정상)
 - **Service status**: ACTIVE
 
 ### 2. 애플리케이션 접근
-- ALB DNS Name으로 접근 (Phase 1 CloudFormation 출력값)
-- `http://ALB_DNS_NAME` → "Hello World!" 페이지 확인
+
+```bash
+ALB_DNS=$(aws cloudformation describe-stacks \
+  --stack-name ci-cd-demo-infrastructure \
+  --query 'Stacks[0].Outputs[?OutputKey==`ALBDNSName`].OutputValue' \
+  --output text --region us-east-1)
+
+curl http://$ALB_DNS
+curl http://$ALB_DNS/health
+```
 
 ### 3. Target Group 상태
-- EC2 콘솔 → Target Groups → ci-cd-demo-blue-tg
+
+```bash
+BLUE_TG_ARN=$(aws cloudformation describe-stacks \
+  --stack-name ci-cd-demo-infrastructure \
+  --query 'Stacks[0].Outputs[?OutputKey==`BlueTargetGroupArn`].OutputValue' \
+  --output text --region us-east-1)
+
+aws elbv2 describe-target-health \
+  --target-group-arn $BLUE_TG_ARN \
+  --region us-east-1
+```
+
 - **Health status**: healthy
 
-## 다음 단계: Phase 3 (Blue/Green 배포)
+## 다음 단계
 
-서비스 생성 후 ECS 콘솔에서 Blue/Green 배포 전략으로 변경:
-
-1. ECS 콘솔 → 서비스 → 배포 탭 → 편집
-2. 배포 전략: **블루/그린** 선택
-3. 로드 밸런서 역할: **ecsInfrastructureRoleForLoadBalancers** 선택
-4. 그린 대상 그룹: **ci-cd-demo-green-tg** 선택
-
-자세한 내용은 `phase3-blue-green-README.md` 참조
+Phase 3: Blue/Green 배포 설정 → `phase3-blue-green-README.md` 참조
