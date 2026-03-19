@@ -20,10 +20,9 @@ phases:
       - docker push $IMAGE_URI:$IMAGE_TAG
       - docker push $IMAGE_URI:latest
       - echo Registering new Task Definition...
-      - sed -e "s|{ACCOUNT_ID}|$ACCOUNT_ID|g" task-definition.json > task-def-resolved.json
-      - sed -i "s|$ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/ci-cd-demo-app:latest|$IMAGE_URI:$IMAGE_TAG|g" task-def-resolved.json
-      - NEW_TASK_DEF=$(aws ecs register-task-definition --cli-input-json file://task-def-resolved.json --region $AWS_DEFAULT_REGION --query 'taskDefinition.taskDefinitionArn' --output text)
-      - echo "New Task Definition:$NEW_TASK_DEF"
-      - echo Updating ECS service...
-      - aws ecs update-service --cluster ci-cd-demo-cluster --service ci-cd-demo-service --task-definition $NEW_TASK_DEF --region $AWS_DEFAULT_REGION
-      - echo "ECS deployment triggered. Blue/Green proceeds in background."
+      - echo Writing image definitions file...
+      - printf '[{"name":"app","imageUri":"%s"}]' $IMAGE_URI:$IMAGE_TAG > imagedefinitions.json
+      - cat imagedefinitions.json
+artifacts:
+  files:
+    - imagedefinitions.json
